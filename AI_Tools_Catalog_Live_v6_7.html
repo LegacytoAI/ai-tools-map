@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Toolscape (v6.7, Stable)</title>
+<style>
+  :root { --bg:#0b0f14; --card:#0f1520; --muted:#a4b3c6; --text:#e7eef6; --border:#233041; --primary:#4da3ff; --secondary:#7efcc6; }
+  *{box-sizing:border-box} html,body{height:100%} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Noto Sans KR','Malgun Gothic',Arial;background:#0b0f14;color:var(--text)}
+  header{border-bottom:1px solid var(--border);background:rgba(12,19,32,.85);backdrop-filter:blur(10px);position:sticky;top:0;z-index:1000}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px 20px}
+  .brand h1{margin:0;font-size:19px;letter-spacing:.3px} .brand .sub{color:var(--muted);font-size:12.5px}
+  .toolbar{display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:10px;margin-top:12px;align-items:center}
+  .search,select,button,input[type="url"],input[type="number"],input[type="file"]{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:14px}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr);padding:18px 20px}
+  .card{grid-column:span 6;background:#0f1726;border:1px solid var(--border);border-radius:14px;padding:14px}
+  .card h3{margin:0 0 8px;font-size:16px;color:var(--primary);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .pill{background:#092032;color:#bfe6ff;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #1e3953}
+  table{width:100%;border-collapse:collapse;font-size:13.2px}
+  th,td{border-bottom:1px solid #19263a;padding:8px 8px;text-align:left;vertical-align:top}
+  th{color:#a9bad1;font-size:12px} a.tool{color:#dbeaff;text-decoration:none;border-bottom:1px dashed #335b8f} a.tool:hover{color:#fff;border-bottom-color:#5aa9ff}
+  .lvl{font-size:11px;color:#0c1522;background:#8fd1ff;border:1px solid #2b4f73;padding:2px 8px;border-radius:999px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px} .tag{font-size:11px;border:1px solid #2a3d57;padding:2px 8px;border-radius:999px;background:#0e2035;color:#cfe6ff}
+  .footer{color:#90a4bf;padding:20px} .small{font-size:12px;color:#a8bad1}
+  .count{margin-left:8px;font-size:12px;color:#9ecbff}
+  @media (max-width:1024px){.card{grid-column:span 12}.toolbar{grid-template-columns:1fr}}
+  @media print{ html,body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact} header{position:static;background:#fff;color:#000;border:none} .wrap{max-width:100%;padding:0 8mm} .toolbar,.print-btn{display:none!important} .grid{padding:0;gap:8mm;grid-template-columns:1fr} .card{background:#fff;border:1px solid #000;page-break-inside:avoid} .card h3{color:#000} .pill{background:#fff;color:#000;border:1px solid #000} table{font-size:12pt} th,td{border-color:#000} a.tool{color:#000 !important;text-decoration:underline;border-bottom:none} .lvl{background:#fff;color:#000;border:1px solid #000} .tag{background:#fff;color:#000;border:1px solid #000} @page{size:A4;margin:10mm} }
+
+/* Print: append URL after hyperlinks for offline readers */
+@media print {
+  a.tool[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color:#000;
+  }
+}
+
+/* === Print Optimization v2 === */
+@media print {
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 10.75pt; /* slightly condensed to reduce overflow */
+    line-height: 1.35;
+  }
+  header {
+    position: static !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .wrap { max-width: 100% !important; padding: 0 10mm !important; }
+  .toolbar, .print-btn, .tooltip, .tipbox, #status, .count { display: none !important; }
+  .grid {
+    padding: 0 !important;
+    gap: 10mm !important;
+    grid-template-columns: 1fr !important;
+  }
+  .card {
+    background: #fff !important;
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid-page !important;
+    -webkit-region-break-inside: avoid;
+    padding: 10mm !important; /* room for inner table */
+  }
+  .grid .card:first-child { margin-top: 6mm !important; }
+  /* Start each category card on a new page for clarity */
+  .card + .card { page-break-before: always !important; break-before: page !important; }
+  .card h3 { color: #000 !important; }
+  .pill, .lvl, .tag {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+  }
+  table {
+    font-size: 10.25pt !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important; /* avoid column drift */
+  }
+  th, td {
+    border-color: #000 !important;
+    border-bottom: 1px solid #000 !important;
+    padding: 5pt 5pt !important;
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+  thead { display: table-header-group !important; }
+  tfoot { display: table-footer-group !important; }
+  tr { page-break-inside: avoid !important; break-inside: avoid-page !important; }
+  a.tool {
+    color: #000 !important;
+    text-decoration: underline !important;
+    border-bottom: none !important;
+  }
+  /* Append URL to links for offline readability */
+  a.tool[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #000;
+  }
+}
+@page { size: A4 portrait; margin: 10mm; }
+/* === End Print Optimization v2 === */
+
+/* === Compact Print Mode (v3-compact) === */
+@media print {
+  html, body {
+    font-size: 9.8pt !important;      /* down from 10.75pt */
+    line-height: 1.28 !important;
+  }
+  @page { size: A4 portrait; margin: 8mm !important; }  /* tighter margins */
+  .wrap { padding: 0 8mm !important; }
+  .grid { gap: 6mm !important; }      /* less vertical spacing between cards */
+  .card {
+    padding: 6mm !important;          /* down from 10mm */
+    border-width: 0.8pt !important;
+  }
+  .card + .card {
+    page-break-before: auto !important;   /* allow multiple cards per page */
+    break-before: auto !important;
+  }
+  table { font-size: 9.2pt !important; }  /* down from 10.25pt */
+  th, td { padding: 4pt 4pt !important; }
+  .pill, .lvl, .tag { font-size: 8.8pt !important; padding: 1.5pt 5pt !important; }
+  .brand h1 { font-size: 14pt !important; }
+}
+/* === End Compact Print Mode === */
+
+
+/* === Landscape Default Print (v5) === */
+@media print {
+  @page { size: A4 landscape; margin: 8mm; }     /* default to landscape */
+  .wrap { padding: 0 8mm !important; }
+  /* Use two columns in landscape to utilize width */
+  .grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6mm !important;
+  }
+  .card { page-break-inside: avoid !important; }
+  /* Avoid forcing new page between cards in landscape */
+  .card + .card { page-break-before: auto !important; break-before: auto !important; }
+}
+/* === End Landscape Default === */
+
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <h1>AI Toolscape (v6.7)</h1>
+      <div class="sub">카테고리/검색/난이도/태그 <span class="count">행 수: <span id="rowCount">-</span></span></div>
+      <div class="small" id="status"></div>
+    </div>
+    <div class="toolbar">
+      <input id="src" type="url" placeholder="데이터 소스 URL(CSV/JSON)" />
+      <button id="load" class="print-btn">불러오기</button>
+      <button id="save" class="print-btn">URL 저장</button>
+      <button id="restore" class="print-btn">임베드 데이터 복원</button>
+      <input id="every" type="number" min="0" step="1" value="0" title="시간 간격" />
+      <span class="small">시간마다 자동 새로고침(0=끄기)</span>
+      <input id="file" type="file" accept=".csv,.json" />
+      <button id="printBtn" class="print-btn">PDF 내보내기</button>
+      <button id="exportBtn" class="print-btn">스냅샷 내보내기(HTML)</button>
+      <button id="refreshSnapshotBtn" class="print-btn">원클릭 최신화→스냅샷</button>
+    </div>
+    <div class="toolbar">
+      <input id="q" class="search" placeholder="검색(툴/역할/태그)" />
+      <select id="cat"><option value="">카테고리 전체</option><option value="비전문가 코딩 개발">비전문가 코딩 개발</option>
+<option value="전문가 코딩 개발">전문가 코딩 개발</option>
+<option value="대화형 AI 관련">대화형 AI 관련</option>
+<option value="AI agent 관련">AI agent 관련</option>
+<option value="자기자신 학습이 가능한 툴/보조툴(With AI Agent)">자기자신 학습이 가능한 툴/보조툴(With AI Agent)</option>
+<option value="Database 관련">Database 관련</option>
+<option value="동영상 생성 관련">동영상 생성 관련</option>
+<option value="이미지 생성 관련">이미지 생성 관련</option>
+<option value="대본 생성 관련">대본 생성 관련</option>
+<option value="문서분석및 작성 관련">문서분석및 작성 관련</option>
+<option value="음성 아바타 관련">음성 아바타 관련</option>
+<option value="App 과 Web site  자동으로 생성">App 과 Web site  자동으로 생성</option>
+<option value="보안(security) 관련">보안(security) 관련</option>
+<option value="검색(search)  관련">검색(search)  관련</option>
+<option value="MLOps / 운영 / 배포 관련">MLOps / 운영 / 배포 관련</option>
+<option value="LLM의 종류">LLM의 종류</option>
+<option value="MCP의 종류">MCP의 종류</option></select>
+      <button id="reset">필터 초기화</button>
+      <div class="small">마지막 업데이트: <span id="last"></span></div>
+    </div>
+  </div>
+</header>
+
+<main class="grid" id="cards"></main>
+
+
+
+<footer class="footer">
+  <div>© AI Toolscape.</div>
+</footer>
+
+<script>
+// Embedded dataset and order (used on first load)
+const EMBEDDED_DATA = [{"카테고리": "비전문가 코딩 개발", "툴": "Bubble", "역할": "노코드 웹앱 제작/워크플로 자동화", "URL": "https://bubble.io/", "난이도": "Beginner / No‑code", "태그": "노코드, 웹앱, 자동화, 상용"}, {"카테고리": "비전문가 코딩 개발", "툴": "Glide", "역할": "스프레드시트 기반 앱 생성", "URL": "https://www.glideapps.com/", "난이도": "Beginner / No‑code", "태그": "노코드, 모바일, 스프레드시트, 상용"}, {"카테고리": "비전문가 코딩 개발", "툴": "Softr", "역할": "Airtable/Google Sheets로 포털/내부툴", "URL": "https://www.softr.io/", "난이도": "Beginner / No‑code", "태그": "노코드, 포털, 내부툴, 상용"}, {"카테고리": "비전문가 코딩 개발", "툴": "Zapier", "역할": "노코드 자동화/워크플로", "URL": "https://zapier.com/", "난이도": "Beginner", "태그": "노코드, 자동화, 통합, 상용"}, {"카테고리": "비전문가 코딩 개발", "툴": "Make", "역할": "시각적 시나리오 자동화", "URL": "https://www.make.com/", "난이도": "Beginner ~ Intermediate", "태그": "노코드, 자동화, 통합, 상용"}, {"카테고리": "비전문가 코딩 개발", "툴": "n8n", "역할": "오픈소스 워크플로 자동화/통합", "URL": "https://n8n.io/", "난이도": "Intermediate", "태그": "노코드, 자동화, 오픈소스"}, {"카테고리": "전문가 코딩 개발", "툴": "Cursor", "역할": "AI 보조 IDE/코드 생성·리팩터링", "URL": "https://www.cursor.com/", "난이도": "Pro / Developer", "태그": "IDE, 코파일럿, 상용"}, {"카테고리": "전문가 코딩 개발", "툴": "Windsurf", "역할": "코드 모델 기반 에디터/에이전트", "URL": "https://codeium.com/windsurf", "난이도": "Pro / Developer", "태그": "IDE, 에이전트, 상용"}, {"카테고리": "전문가 코딩 개발", "툴": "Claude Code", "역할": "AI 페어프로그래머/편집·테스트", "URL": "https://www.anthropic.com/news/claude-code", "난이도": "Pro / Developer", "태그": "코파일럿, 상용"}, {"카테고리": "전문가 코딩 개발", "툴": "GitHub Copilot", "역할": "IDE 보조 코딩/자동완성", "URL": "https://github.com/features/copilot", "난이도": "Pro / Developer", "태그": "코파일럿, 상용"}, {"카테고리": "전문가 코딩 개발", "툴": "Codeium", "역할": "코드 자동완성/리팩터링", "URL": "https://codeium.com/", "난이도": "Pro / Developer", "태그": "코파일럿, 상용"}, {"카테고리": "전문가 코딩 개발", "툴": "JetBrains AI Assistant", "역할": "JetBrains IDE용 AI 조력자", "URL": "https://www.jetbrains.com/ai/", "난이도": "Pro / Developer", "태그": "IDE, 코파일럿, 상용"}, {"카테고리": "전문가 코딩 개발", "툴": "Amazon Q Developer", "역할": "AWS 개발자 코파일럿/코드/리뷰", "URL": "https://aws.amazon.com/q/developer/", "난이도": "Pro / Developer", "태그": "코파일럿, 클라우드, 상용"}, {"카테고리": "전문가 코딩 개발", "툴": "Tabnine", "역할": "로컬/클라우드 자동완성", "URL": "https://www.tabnine.com/", "난이도": "Pro / Developer", "태그": "코파일럿, 프라이버시, 상용"}, {"카테고리": "대화형 AI 관련", "툴": "ChatGPT (GPT-4/5)", "역할": "범용 대화/도움말/창작", "URL": "https://chat.openai.com/", "난이도": "Beginner", "태그": "대화형, 범용, 상용"}, {"카테고리": "대화형 AI 관련", "툴": "Claude 3.5", "역할": "대화/분석/코딩/긴 문서 요약", "URL": "https://www.anthropic.com/", "난이도": "Beginner", "태그": "대화형, 분석, 코딩, 상용"}, {"카테고리": "대화형 AI 관련", "툴": "Gemini 1.5", "역할": "멀티모달 대화·검색·도움말", "URL": "https://deepmind.google/technologies/gemini/", "난이도": "Beginner", "태그": "대화형, 멀티모달, 상용"}, {"카테고리": "대화형 AI 관련", "툴": "Perplexity", "역할": "대화형 답변·인용 검색", "URL": "https://www.perplexity.ai/", "난이도": "Beginner", "태그": "검색, 인용, 상용"}, {"카테고리": "대화형 AI 관련", "툴": "Pi AI", "역할": "친화적 개인조언/대화", "URL": "https://pi.ai/", "난이도": "Beginner", "태그": "대화형, 개인조언, 상용"}, {"카테고리": "AI agent 관련", "툴": "CrewAI", "역할": "멀티에이전트 협업 프레임워크", "URL": "https://www.crewai.com/", "난이도": "Pro / Developer", "태그": "에이전트, 프레임워크, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "AutoGPT", "역할": "목표지향 자율 에이전트 프레임워크", "URL": "https://autogpt.net/", "난이도": "Pro / Developer", "태그": "에이전트, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "LangChain Agents", "역할": "LangChain 기반 도구연결·프롬프트·에이전트", "URL": "https://www.langchain.com/", "난이도": "Pro / Developer", "태그": "에이전트, 프레임워크, RAG"}, {"카테고리": "AI agent 관련", "툴": "LangGraph", "역할": "LangChain 그래프/상태 기반 에이전트", "URL": "https://langchain-ai.github.io/langgraph/", "난이도": "Pro / Developer", "태그": "에이전트, 프레임워크, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "Semantic Kernel", "역할": "MS 에이전트/플러그인·계획/메모리", "URL": "https://learn.microsoft.com/semantic-kernel/", "난이도": "Pro / Developer", "태그": "에이전트, 플러그인, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "OpenAI Assistants API", "역할": "툴콜/코드해석기 포함 에이전트", "URL": "https://platform.openai.com/docs/assistants/overview", "난이도": "Pro / Developer", "태그": "에이전트, API, 상용"}, {"카테고리": "AI agent 관련", "툴": "OpenAI Swarm", "역할": "경량 멀티에이전트 프레임워크", "URL": "https://github.com/openai/swarm", "난이도": "Pro / Developer", "태그": "에이전트, 프레임워크, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "AutoGen", "역할": "대화기반 멀티에이전트", "URL": "https://microsoft.github.io/autogen/", "난이도": "Pro / Developer", "태그": "에이전트, 프레임워크, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "LlamaIndex Agents", "역할": "RAG/도구연결 에이전트", "URL": "https://www.llamaindex.ai/", "난이도": "Pro / Developer", "태그": "에이전트, RAG, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "FlowiseAI", "역할": "시각적 에이전트/RAG 빌더", "URL": "https://flowiseai.com/", "난이도": "Pro / Developer", "태그": "노코드, 에이전트, RAG, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "Langflow", "역할": "노코드 에이전트/RAG 파이프라인", "URL": "https://www.langflow.org/", "난이도": "Pro / Developer", "태그": "노코드, 에이전트, RAG, 오픈소스"}, {"카테고리": "AI agent 관련", "툴": "Dify.ai", "역할": "에이전트/앱 빌더 & 운영", "URL": "https://dify.ai/", "난이도": "Pro / Developer", "태그": "플랫폼, 에이전트, 상용"}, {"카테고리": "AI agent 관련", "툴": "Dust.tt", "역할": "사내 데이터 연결 대화·에이전트", "URL": "https://dust.tt/", "난이도": "Pro / Developer", "태그": "플랫폼, 에이전트, 상용"}, {"카테고리": "AI agent 관련", "툴": "Botpress", "역할": "챗봇/에이전트 스튜디오", "URL": "https://botpress.com/", "난이도": "Pro / Developer", "태그": "플랫폼, 에이전트, 상용"}, {"카테고리": "AI agent 관련", "툴": "Zapier AI Agents", "역할": "업무 자동화형 에이전트", "URL": "https://zapier.com/ai/agents", "난이도": "Pro / Developer", "태그": "에이전트, 노코드, 자동화, 상용"}, {"카테고리": "AI agent 관련", "툴": "Devin", "역할": "소프트웨어 에이전트(개발작업)", "URL": "https://www.cognition.ai/", "난이도": "Pro / Developer", "태그": "에이전트, 개발, 상용"}, {"카테고리": "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "툴": "LangSmith", "역할": "프롬프트/체인 평가·관찰·피드백 루프", "URL": "https://www.langchain.com/langsmith", "난이도": "Intermediate", "태그": "관찰, 평가, 상용"}, {"카테고리": "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "툴": "Humanloop", "역할": "데이터·피드백 학습/실험관리", "URL": "https://humanloop.com/", "난이도": "Intermediate", "태그": "실험, 피드백, 상용"}, {"카테고리": "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "툴": "Ragas", "역할": "RAG 평가/피드백 루프", "URL": "https://github.com/explodinggradients/ragas", "난이도": "Intermediate", "태그": "평가, 오픈소스"}, {"카테고리": "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "툴": "Evidently AI", "역할": "데이터/모델 모니터링·드리프트", "URL": "https://www.evidentlyai.com/", "난이도": "Intermediate", "태그": "모니터링, 오픈소스"}, {"카테고리": "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "툴": "Arize AI", "역할": "LLM 관찰/평가/품질", "URL": "https://arize.com/", "난이도": "Intermediate", "태그": "관찰, 평가, 상용"}, {"카테고리": "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "툴": "WhyLabs", "역할": "모니터링/가드레일/관찰", "URL": "https://whylabs.ai/", "난이도": "Intermediate", "태그": "모니터링, 가드레일, 상용"}, {"카테고리": "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "툴": "PromptLayer", "역할": "프롬프트 버전/실험 로깅", "URL": "https://www.promptlayer.com/", "난이도": "Intermediate", "태그": "프롬프트, 로깅, 상용"}, {"카테고리": "Database 관련", "툴": "Pinecone", "역할": "벡터DB 관리형", "URL": "https://www.pinecone.io/", "난이도": "Pro / Developer", "태그": "벡터DB, 상용"}, {"카테고리": "Database 관련", "툴": "Weaviate", "역할": "오픈소스/클라우드 벡터DB", "URL": "https://weaviate.io/", "난이도": "Pro / Developer", "태그": "벡터DB, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Milvus", "역할": "대규모 벡터DB", "URL": "https://milvus.io/", "난이도": "Pro / Developer", "태그": "벡터DB, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Chroma", "역할": "경량 벡터스토어", "URL": "https://www.trychroma.com/", "난이도": "Pro / Developer", "태그": "벡터DB, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Qdrant", "역할": "고성능 벡터DB", "URL": "https://qdrant.tech/", "난이도": "Pro / Developer", "태그": "벡터DB, 오픈소스"}, {"카테고리": "Database 관련", "툴": "LlamaIndex", "역할": "데이터 연결·인덱싱·RAG", "URL": "https://www.llamaindex.ai/", "난이도": "Pro / Developer", "태그": "RAG, 프레임워크, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Haystack", "역할": "RAG 프레임워크/파이프라인", "URL": "https://haystack.deepset.ai/", "난이도": "Pro / Developer", "태그": "RAG, 오픈소스"}, {"카테고리": "Database 관련", "툴": "LangChain (RAG)", "역할": "RAG·체인·도구연결", "URL": "https://python.langchain.com/docs/use_cases/question_answering/", "난이도": "Pro / Developer", "태그": "RAG, 프레임워크, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Elasticsearch", "역할": "검색/벡터·키워드 혼합", "URL": "https://www.elastic.co/elasticsearch/", "난이도": "Pro / Developer", "태그": "검색, 오픈소스"}, {"카테고리": "Database 관련", "툴": "OpenSearch", "역할": "오픈소스 검색/벡터", "URL": "https://opensearch.org/", "난이도": "Pro / Developer", "태그": "검색, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Vespa", "역할": "대규모 벡터/추천/검색", "URL": "https://vespa.ai/", "난이도": "Pro / Developer", "태그": "검색, 추천, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Typesense", "역할": "경량 검색/벡터옵션", "URL": "https://typesense.org/", "난이도": "Pro / Developer", "태그": "검색, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Fivetran", "역할": "ETL/ELT 커넥터", "URL": "https://www.fivetran.com/", "난이도": "Pro / Developer", "태그": "ETL, 상용"}, {"카테고리": "Database 관련", "툴": "Airbyte", "역할": "오픈소스 ELT", "URL": "https://airbyte.com/", "난이도": "Pro / Developer", "태그": "ELT, 오픈소스"}, {"카테고리": "Database 관련", "툴": "dbt", "역할": "변환/모델링", "URL": "https://www.getdbt.com/", "난이도": "Pro / Developer", "태그": "데이터변환, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Apache Airflow", "역할": "워크플로 스케줄러", "URL": "https://airflow.apache.org/", "난이도": "Pro / Developer", "태그": "오케스트레이션, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Prefect", "역할": "오케스트레이션", "URL": "https://www.prefect.io/", "난이도": "Pro / Developer", "태그": "오케스트레이션, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Dagster", "역할": "데이터 파이프라인 오케스트레이션", "URL": "https://dagster.io/", "난이도": "Pro / Developer", "태그": "오케스트레이션, 오픈소스"}, {"카테고리": "동영상 생성 관련", "툴": "Sora", "역할": "텍스트-비디오 생성", "URL": "https://openai.com/sora", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 생성, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Veo 3", "역할": "고품질 텍스트-비디오", "URL": "https://deepmind.google/technologies/veo/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 생성, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Runway", "역할": "영상 생성/편집/모션", "URL": "https://runwayml.com/", "난이도": "Beginner", "태그": "비디오, 편집, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Pika", "역할": "영상 생성/편집", "URL": "https://pika.art/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 편집, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Luma Dream Machine", "역할": "텍스트-비디오/카메라 모션", "URL": "https://lumalabs.ai/dream-machine", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 생성, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Kling AI", "역할": "고품질 비디오 생성", "URL": "https://klingai.com/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 생성"}, {"카테고리": "동영상 생성 관련", "툴": "Stable Video Diffusion", "역할": "오픈 비디오 생성/연구", "URL": "https://stability.ai/news/stable-video-diffusion-research", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 오픈소스"}, {"카테고리": "동영상 생성 관련", "툴": "Kaiber", "역할": "스타일 영상화", "URL": "https://kaiber.ai/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Fliki", "역할": "문서→영상 변환/TTS", "URL": "https://fliki.ai/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, TTS, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "HeyGen", "역할": "아바타 프레젠터", "URL": "https://www.heygen.com/", "난이도": "Beginner ~ Intermediate", "태그": "아바타, 비디오, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Synthesia", "역할": "스튜디오급 아바타 영상", "URL": "https://www.synthesia.io/", "난이도": "Beginner ~ Intermediate", "태그": "아바타, 비디오, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Colossyan", "역할": "아바타 교육 영상", "URL": "https://www.colossyan.com/", "난이도": "Beginner ~ Intermediate", "태그": "아바타, 비디오, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Pictory", "역할": "스크립트→요약 영상", "URL": "https://pictory.ai/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 요약, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "InVideo", "역할": "템플릿 영상 생성", "URL": "https://invideo.io/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 템플릿, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Kapwing AI", "역할": "웹기반 영상 편집·생성", "URL": "https://www.kapwing.com/ai", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 편집, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Descript", "역할": "자막/클립/오디오편집", "URL": "https://www.descript.com/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 오디오, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Veed.io", "역할": "온라인 편집/자막", "URL": "https://www.veed.io/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 편집, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "CapCut", "역할": "편집/템플릿/효과", "URL": "https://www.capcut.com/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 편집, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Opus Clip", "역할": "롱폼→숏폼 자동클립", "URL": "https://www.opus.pro/", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 요약, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Adobe Premiere Pro (Sensei)", "역할": "AI 기능 포함 편집", "URL": "https://www.adobe.com/products/premiere.html", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 편집, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "DaVinci Resolve (Neural Engine)", "역할": "AI 색보정/편집", "URL": "https://www.blackmagicdesign.com/products/davinciresolve", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 편집, 상용"}, {"카테고리": "동영상 생성 관련", "툴": "Topaz Video AI", "역할": "업스케일/노이즈/프레임", "URL": "https://www.topazlabs.com/topaz-video-ai", "난이도": "Beginner ~ Intermediate", "태그": "비디오, 업스케일, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "MidJourney", "역할": "고품질 이미지 생성", "URL": "https://www.midjourney.com/", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 생성, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "DALL·E 3", "역할": "텍스트-이미지/에디트", "URL": "https://openai.com/dall-e-3", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 생성, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "Stable Diffusion XL", "역할": "오픈 이미지 생성", "URL": "https://stability.ai/stable-diffusion", "난이도": "Pro / Developer", "태그": "이미지, 생성, 오픈소스"}, {"카테고리": "이미지 생성 관련", "툴": "Ideogram", "역할": "텍스트타입그래피 강점", "URL": "https://ideogram.ai/", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 텍스트, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "Leonardo.ai", "역할": "게임/콘셉트/자산", "URL": "https://leonardo.ai/", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 게임, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "Photoshop Firefly", "역할": "생성·확장·리터치", "URL": "https://www.adobe.com/sensei/generative-ai/firefly.html", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 편집, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "Canva AI", "역할": "디자인+생성", "URL": "https://www.canva.com/ai/", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 디자인, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "Clipdrop", "역할": "배경제거/리라이트", "URL": "https://clipdrop.co/", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 편집, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "GIMP + SD plugin", "역할": "오픈소스 편집+생성", "URL": "https://www.gimp.org/", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 편집, 오픈소스"}, {"카테고리": "이미지 생성 관련", "툴": "Topaz Photo AI", "역할": "업스케일/노이즈 제거", "URL": "https://www.topazlabs.com/topaz-photo-ai", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 업스케일, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "Gigapixel AI", "역할": "초해상도", "URL": "https://www.topazlabs.com/gigapixel-ai", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 업스케일, 상용"}, {"카테고리": "이미지 생성 관련", "툴": "Remini", "역할": "복원/선명화", "URL": "https://remini.ai/", "난이도": "Beginner ~ Intermediate", "태그": "이미지, 복원, 상용"}, {"카테고리": "대본 생성 관련", "툴": "Jasper", "역할": "마케팅/세일즈 카피/대본", "URL": "https://www.jasper.ai/", "난이도": "Beginner", "태그": "텍스트, 마케팅, 상용"}, {"카테고리": "대본 생성 관련", "툴": "Copy.ai", "역할": "카피/세일즈 자동화", "URL": "https://www.copy.ai/", "난이도": "Beginner", "태그": "텍스트, 세일즈, 상용"}, {"카테고리": "대본 생성 관련", "툴": "Writesonic", "역할": "콘텐츠 생성", "URL": "https://writesonic.com/", "난이도": "Beginner", "태그": "텍스트, 블로그, 상용"}, {"카테고리": "대본 생성 관련", "툴": "Sudowrite", "역할": "창작/소설/브레인스토밍", "URL": "https://www.sudowrite.com/", "난이도": "Beginner", "태그": "텍스트, 창작, 상용"}, {"카테고리": "대본 생성 관련", "툴": "ScriptAI", "역할": "영상 대본/시나리오", "URL": "https://www.scriptai.co/", "난이도": "Beginner", "태그": "텍스트, 영상대본, 상용"}, {"카테고리": "대본 생성 관련", "툴": "Rytr", "역할": "라이트웨이트 카피", "URL": "https://rytr.me/", "난이도": "Beginner", "태그": "텍스트, 카피, 상용"}, {"카테고리": "문서분석및 작성 관련", "툴": "Notion AI", "역할": "문서/위키/요약", "URL": "https://www.notion.so/product/ai", "난이도": "Beginner", "태그": "문서, 요약, 상용"}, {"카테고리": "문서분석및 작성 관련", "툴": "Elicit", "역할": "리서치·논문 요약/질의", "URL": "https://elicit.com/", "난이도": "Beginner", "태그": "문서, 논문, 상용"}, {"카테고리": "문서분석및 작성 관련", "툴": "Scholarcy", "역할": "논문 요약/하이라이트", "URL": "https://www.scholarcy.com/", "난이도": "Beginner", "태그": "문서, 논문, 상용"}, {"카테고리": "문서분석및 작성 관련", "툴": "GrammarlyGO", "역할": "문장 교정/리라이트", "URL": "https://www.grammarly.com/ai", "난이도": "Beginner", "태그": "문서, 교정, 상용"}, {"카테고리": "문서분석및 작성 관련", "툴": "Perplexity", "역할": "인용 포함 리서치 QA", "URL": "https://www.perplexity.ai/", "난이도": "Beginner", "태그": "문서, 검색, 상용"}, {"카테고리": "음성 아바타 관련", "툴": "Whisper", "역할": "STT(음성→텍스트)", "URL": "https://openai.com/research/whisper", "난이도": "Beginner ~ Intermediate", "태그": "STT, 오픈소스"}, {"카테고리": "음성 아바타 관련", "툴": "Deepgram", "역할": "STT API/실시간", "URL": "https://deepgram.com/", "난이도": "Beginner ~ Intermediate", "태그": "STT, 상용"}, {"카테고리": "음성 아바타 관련", "툴": "ElevenLabs", "역할": "TTS 고품질 음성합성", "URL": "https://elevenlabs.io/", "난이도": "Beginner ~ Intermediate", "태그": "TTS, 상용"}, {"카테고리": "음성 아바타 관련", "툴": "Play.ht", "역할": "TTS/아바타", "URL": "https://play.ht/", "난이도": "Beginner ~ Intermediate", "태그": "TTS, 아바타, 상용"}, {"카테고리": "음성 아바타 관련", "툴": "D-ID", "역할": "얼굴 애니메이션/아바타", "URL": "https://www.d-id.com/", "난이도": "Beginner ~ Intermediate", "태그": "아바타, 비디오, 상용"}, {"카테고리": "음성 아바타 관련", "툴": "Suno", "역할": "AI 음악 생성", "URL": "https://www.suno.ai/", "난이도": "Beginner ~ Intermediate", "태그": "음악, 상용"}, {"카테고리": "음성 아바타 관련", "툴": "Udio", "역할": "AI 음악 생성", "URL": "https://www.udio.com/", "난이도": "Beginner ~ Intermediate", "태그": "음악, 상용"}, {"카테고리": "음성 아바타 관련", "툴": "AIVA", "역할": "작곡/편곡", "URL": "https://www.aiva.ai/", "난이도": "Beginner ~ Intermediate", "태그": "음악, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Replit (Bolt.new)", "역할": "대화형 앱 자동 생성", "URL": "https://replit.com/site/bolt", "난이도": "Intermediate", "태그": "자동생성, 앱, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Replit (Agents/Bolt.new)", "역할": "에이전트로 앱 생성·개선", "URL": "https://replit.com/site/bolt", "난이도": "Intermediate", "태그": "에이전트, 앱, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Lovable.dev", "역할": "자연어→웹앱 초안", "URL": "https://lovable.dev/", "난이도": "Intermediate", "태그": "웹, 자동생성, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Locofy.ai", "역할": "디자인→코드 변환", "URL": "https://www.locofy.ai/", "난이도": "Beginner ~ Intermediate", "태그": "디자인→코드, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Framer AI", "역할": "프로토·웹사이트 생성", "URL": "https://www.framer.com/ai/", "난이도": "Beginner ~ Intermediate", "태그": "웹, 프로토, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Webflow AI", "역할": "웹사이트/카피 생성", "URL": "https://webflow.com/ai", "난이도": "Beginner ~ Intermediate", "태그": "웹, 카피, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Vercel v0", "역할": "프롬프트→UI/페이지 생성", "URL": "https://v0.dev/", "난이도": "Beginner ~ Intermediate", "태그": "웹, 자동생성, 상용"}, {"카테고리": "App 과 Web site  자동으로 생성", "툴": "Streamlit", "역할": "파이썬 앱 빠른 생성", "URL": "https://streamlit.io/", "난이도": "Beginner ~ Intermediate", "태그": "개발자, 앱, 오픈소스"}, {"카테고리": "보안(security) 관련", "툴": "Guardrails AI", "역할": "프롬프트/출력 가드레일", "URL": "https://www.guardrailsai.com/", "난이도": "Pro / Developer", "태그": "가드레일, 품질, 오픈소스"}, {"카테고리": "보안(security) 관련", "툴": "Lakera Guard", "역할": "프롬프트 주입/보안 검사", "URL": "https://www.lakera.ai/", "난이도": "Pro / Developer", "태그": "가드레일, 보안, 상용"}, {"카테고리": "보안(security) 관련", "툴": "OpenAI Moderation", "역할": "콘텐츠 안전 필터", "URL": "https://platform.openai.com/docs/guides/moderation", "난이도": "Pro / Developer", "태그": "안전, API, 상용"}, {"카테고리": "보안(security) 관련", "툴": "Azure Content Safety", "역할": "콘텐츠 안전/정책", "URL": "https://azure.microsoft.com/products/ai-services/ai-content-safety", "난이도": "Pro / Developer", "태그": "안전, 클라우드, 상용"}, {"카테고리": "보안(security) 관련", "툴": "Protect AI", "역할": "ML 보안/서플라이체인", "URL": "https://protectai.com/", "난이도": "Pro / Developer", "태그": "보안, 상용"}, {"카테고리": "보안(security) 관련", "툴": "Presidio", "역할": "PII 탐지/비식별화", "URL": "https://microsoft.github.io/presidio/", "난이도": "Pro / Developer", "태그": "프라이버시, 오픈소스"}, {"카테고리": "보안(security) 관련", "툴": "Gretel.ai", "역할": "합성데이터/프라이버시", "URL": "https://gretel.ai/", "난이도": "Pro / Developer", "태그": "합성데이터, 프라이버시, 상용"}, {"카테고리": "보안(security) 관련", "툴": "Mostly AI", "역할": "합성데이터/프라이버시", "URL": "https://mostly.ai/", "난이도": "Pro / Developer", "태그": "합성데이터, 프라이버시, 상용"}, {"카테고리": "보안(security) 관련", "툴": "Tonic.ai", "역할": "합성데이터/마스킹", "URL": "https://www.tonic.ai/", "난이도": "Pro / Developer", "태그": "합성데이터, 프라이버시, 상용"}, {"카테고리": "검색(search)  관련", "툴": "Perplexity", "역할": "실시간 인용 기반 답변", "URL": "https://www.perplexity.ai/", "난이도": "Beginner", "태그": "검색, 인용, 상용"}, {"카테고리": "검색(search)  관련", "툴": "Andi", "역할": "대화형 검색/요약", "URL": "https://andisearch.com/", "난이도": "Beginner", "태그": "검색, 요약, 상용"}, {"카테고리": "검색(search)  관련", "툴": "You.com", "역할": "멀티엔진/앱검색", "URL": "https://you.com/", "난이도": "Beginner", "태그": "검색, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Hugging Face", "역할": "허브/추론/스페이스/데이터셋", "URL": "https://huggingface.co/", "난이도": "Pro / Developer", "태그": "호스팅, 추론, 오픈"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Replicate", "역할": "모델 호스팅/서빙", "URL": "https://replicate.com/", "난이도": "Pro / Developer", "태그": "호스팅, 서빙, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Modal", "역할": "서버리스 배치/추론", "URL": "https://modal.com/", "난이도": "Pro / Developer", "태그": "서버리스, 추론, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Groq Cloud", "역할": "LLM 추론 가속/서빙", "URL": "https://groq.com/", "난이도": "Pro / Developer", "태그": "가속, 추론, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Together.ai", "역할": "모델 호스팅/파인튜닝", "URL": "https://www.together.ai/", "난이도": "Pro / Developer", "태그": "호스팅, 튜닝, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Anyscale", "역할": "Ray 기반 분산/서빙", "URL": "https://www.anyscale.com/", "난이도": "Pro / Developer", "태그": "분산, 서빙, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Fireworks.ai", "역할": "서빙/커스텀 모델", "URL": "https://fireworks.ai/", "난이도": "Pro / Developer", "태그": "서빙, 튜닝, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Banana.dev", "역할": "GPU 서버리스 서빙", "URL": "https://www.banana.dev/", "난이도": "Pro / Developer", "태그": "서버리스, GPU, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "vLLM", "역할": "고성능 추론 엔진", "URL": "https://vllm.ai/", "난이도": "Pro / Developer", "태그": "추론, 오픈소스"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Text Generation Inference (TGI)", "역할": "Hugging Face 추론 서버", "URL": "https://github.com/huggingface/text-generation-inference", "난이도": "Pro / Developer", "태그": "추론, 오픈소스"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Triton Inference Server", "역할": "NVIDIA 추론 서버", "URL": "https://developer.nvidia.com/nvidia-triton-inference-server", "난이도": "Pro / Developer", "태그": "추론, 오픈소스"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "Weights & Biases", "역할": "실험/모니터링", "URL": "https://wandb.ai/", "난이도": "Pro / Developer", "태그": "실험, 모니터링, 상용"}, {"카테고리": "MLOps / 운영 / 배포 관련", "툴": "MLflow", "역할": "실험/모델레지스트리", "URL": "https://mlflow.org/", "난이도": "Pro / Developer", "태그": "실험, 레지스트리, 오픈소스"}, {"카테고리": "LLM의 종류", "툴": "GPT-4/5", "역할": "범용 대형언어모델", "URL": "https://openai.com/", "난이도": "—", "태그": "LLM, 상용"}, {"카테고리": "LLM의 종류", "툴": "Claude 3.5", "역할": "안전/추론/코딩 강점", "URL": "https://www.anthropic.com/", "난이도": "—", "태그": "LLM, 상용"}, {"카테고리": "LLM의 종류", "툴": "Gemini 1.5", "역할": "멀티모달 긴 컨텍스트", "URL": "https://deepmind.google/technologies/gemini/", "난이도": "—", "태그": "LLM, 상용"}, {"카테고리": "LLM의 종류", "툴": "LLaMA", "역할": "오픈 가중치 계열", "URL": "https://ai.meta.com/llama/", "난이도": "—", "태그": "LLM, 오픈"}, {"카테고리": "LLM의 종류", "툴": "Mistral", "역할": "경량·오픈 계열", "URL": "https://mistral.ai/", "난이도": "—", "태그": "LLM, 오픈"}, {"카테고리": "LLM의 종류", "툴": "Cohere Command R+", "역할": "엔터프라이즈 RAG 최적", "URL": "https://cohere.com/", "난이도": "—", "태그": "LLM, 상용"}, {"카테고리": "MCP의 종류", "툴": "OpenAI MCP", "역할": "Model Context Protocol", "URL": "https://modelcontextprotocol.io/", "난이도": "—", "태그": "MCP, 오픈"}, {"카테고리": "MCP의 종류", "툴": "Anthropic MCP", "역할": "MCP 구현/도구연결", "URL": "https://docs.anthropic.com/en/docs/build-with-application/mcp-overview", "난이도": "—", "태그": "MCP, 오픈"}, {"카테고리": "Database 관련", "툴": "Supabase", "역할": "Postgres 기반 BaaS (Auth/Storage/Edge Functions)", "URL": "https://supabase.com/", "난이도": "Pro / Developer", "태그": "BaaS, Postgres, 실시간, 오픈소스"}, {"카테고리": "Database 관련", "툴": "Firebase", "역할": "BaaS (Firestore/Realtime DB/Auth/Hosting)", "URL": "https://firebase.google.com/", "난이도": "Pro / Developer", "태그": "BaaS, NoSQL, 실시간, 상용"}];
+const EMBEDDED_ORDER = ["비전문가 코딩 개발", "전문가 코딩 개발", "대화형 AI 관련", "AI agent 관련", "자기자신 학습이 가능한 툴/보조툴(With AI Agent)", "Database 관련", "동영상 생성 관련", "이미지 생성 관련", "대본 생성 관련", "문서분석및 작성 관련", "음성 아바타 관련", "App 과 Web site  자동으로 생성", "보안(security) 관련", "검색(search)  관련", "MLOps / 운영 / 배포 관련", "LLM의 종류", "MCP의 종류"];
+let DATA = JSON.parse(JSON.stringify(EMBEDDED_DATA));
+let ORDER = JSON.parse(JSON.stringify(EMBEDDED_ORDER));
+
+// Elements
+const cards = document.getElementById('cards');
+const q = document.getElementById('q');
+const catSel = document.getElementById('cat');
+const resetBtn = document.getElementById('reset');
+const printBtn = document.getElementById('printBtn');
+const src = document.getElementById('src');
+const loadBtn = document.getElementById('load');
+const saveBtn = document.getElementById('save');
+const restoreBtn = document.getElementById('restore');
+const fileInput = document.getElementById('file');
+const every = document.getElementById('every');
+const statusEl = document.getElementById('status');
+const last = document.getElementById('last');
+const rowCount = document.getElementById('rowCount');
+
+function setStatus(m){ if(statusEl) statusEl.textContent = m||''; console.log('[Toolscape]', m); }
+function nowStr(){ return new Date().toLocaleString(); }
+function updateRowCount(){ rowCount.textContent = DATA.length; }
+
+function filterData(){
+  const term = q.value.trim().toLowerCase();
+  const cat = catSel.value;
+  return DATA.filter(r => {
+    if(cat && r["카테고리"] !== cat) return false;
+    if(!term) return true;
+    const hay = (r["카테고리"] + ' ' + r["툴"] + ' ' + r["역할"] + ' ' + r["난이도"] + ' ' + (r["태그"]||'')).toLowerCase();
+    return hay.includes(term);
+  });
+}
+
+function groupByCategory(rows){
+  const map = {};
+  for(const r of rows){
+    const c = r["카테고리"] || "기타";
+    if(!map[c]) map[c] = [];
+    map[c].push(r);
+  }
+  return map;
+}
+
+function tagBadges(tagStr){
+  if(!tagStr) return '';
+  return tagStr.split(',').map(s => s.trim()).filter(Boolean).map(t => '<span class="tag">'+t+'</span>').join('');
+}
+
+function render(){
+  const rows = filterData();
+  const grouped = groupByCategory(rows);
+  cards.innerHTML = '';
+
+  for(const cat of ORDER){
+    const items = grouped[cat];
+    if(!items || items.length === 0) continue;
+
+    const card = document.createElement('section');
+    card.className = 'card';
+
+    const h3 = document.createElement('h3');
+    h3.innerHTML = '<span>'+cat+'</span>' +
+      '<span style="display:flex;align-items:center;gap:8px">' +
+      '<span class="pill">'+items.length+'</span>' +
+      '</span>';
+    card.appendChild(h3);
+
+    const table = document.createElement('table');
+    table.innerHTML = '<thead><tr><th>TOOLS</th><th>역할</th><th>난이도</th><th>태그</th></tr></thead>';
+    const tb = document.createElement('tbody');
+
+    for(const r of items){
+      const tr = document.createElement('tr');
+      const toolLink = '<a class="tool" href="'+(r["URL"]||'#')+'" target="_blank" rel="noopener">'+(r["툴"]||'(이름없음)')+'</a>';
+      tr.innerHTML = '<td>'+toolLink+'</td><td>'+(r["역할"]||'')+'</td><td><span class="lvl">'+(r["난이도"]||'')+'</span></td><td class="tags">'+tagBadges(r["태그"]||"")+'</td>';
+      tb.appendChild(tr);
+    }
+    table.appendChild(tb);
+    card.appendChild(table);
+    cards.appendChild(card);
+  }
+
+  // Full table
+  
+  for(const r of rows){
+    const tr = document.createElement('tr');
+    const toolLink = '<a class="tool" href="'+(r["URL"]||'#')+'" target="_blank" rel="noopener">'+(r["툴"]||'(이름없음)')+'</a>';
+    tr.innerHTML = '<td>'+(r["카테고리"]||'')+'</td><td>'+toolLink+'</td><td>'+(r["역할"]||'')+'</td><td><span class="lvl">'+(r["난이도"]||'')+'</span></td><td class="tags">'+tagBadges(r["태그"]||"")+'</td>';
+    tbody.appendChild(tr);
+  }
+
+  updateRowCount();
+}
+
+// Fetch/normalize for external sources (optional)
+function parseCSV(text){
+  const rows=[]; let i=0, cur='', inQ=false, row=[];
+  while(i<text.length){
+    const ch=text[i];
+    if(inQ){ if(ch==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else inQ=false; } else cur+=ch; }
+    else { if(ch==='"') inQ=true; else if(ch===','){ row.push(cur); cur=''; } else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; } else if(ch!=='\r'){ cur+=ch; } }
+    i++;
+  }
+  if(cur.length>0 || row.length>0){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function csvToObjects(text){
+  const rows = parseCSV(text);
+  if(rows.length===0) return [];
+  const header = rows[0];
+  return rows.slice(1).filter(r=>r.length>1).map(r=>Object.fromEntries(header.map((h,idx)=>[h, r[idx]||''])));
+}
+function normalizeRows(rows){
+  return rows.map(r => ({"카테고리": r["카테고리"]||r["category"]||"", "툴": r["툴"]||r["tool"]||r["name"]||"", "역할": r["역할"]||r["role"]||"", "URL": r["URL"]||r["url"]||"", "난이도": r["난이도"]||r["level"]||"", "태그": r["태그"]||r["tags"]||""}));
+}
+async function fetchDataFrom(url){
+  setStatus('불러오는 중…');
+  try{
+    const res = await fetch(url + (url.includes('?')?'&':'?') + 'cb='+Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const ct = res.headers.get('content-type')||'';
+    const text = await res.text();
+    let rows = (ct.includes('json') || url.toLowerCase().endsWith('.json')) ? JSON.parse(text) : csvToObjects(text);
+    if(!Array.isArray(rows)) throw new Error('형식 오류');
+    DATA = normalizeRows(rows);
+    render(); last.textContent = nowStr(); setStatus('완료'); updateRowCount();
+  }catch(e){ console.error(e); setStatus('에러: '+e.message); }
+}
+
+// Controls
+q.addEventListener('input', render);
+catSel.addEventListener('change', render);
+resetBtn.addEventListener('click', () => { q.value=''; catSel.value=''; render(); });
+printBtn.addEventListener('click', () => window.print());
+loadBtn.addEventListener('click', () => { if(src.value) fetchDataFrom(src.value); });
+saveBtn.addEventListener('click', () => { if(src.value) localStorage.setItem('toolscape.dataURL', src.value); setStatus('URL 저장됨'); });
+restoreBtn.addEventListener('click', () => { DATA = JSON.parse(JSON.stringify(EMBEDDED_DATA)); ORDER = JSON.parse(JSON.stringify(EMBEDDED_ORDER)); render(); setStatus('임베드 데이터 복원'); });
+fileInput.addEventListener('change', async (ev) => {
+  const f = ev.target.files[0]; if(!f) return;
+  const text = await f.text();
+  let rows; try{ rows = f.name.endsWith('.json') ? JSON.parse(text) : csvToObjects(text); }
+  catch(e){ setStatus('파일 파싱 실패'); return; }
+  DATA = normalizeRows(rows); render(); last.textContent = nowStr(); setStatus('업로드 완료'); updateRowCount();
+});
+
+// Auto refresh
+let timer=null;
+function applyAutoRefresh(){
+  const hours = parseInt(every.value||'0',10);
+  if(timer){ clearInterval(timer); timer=null; }
+  if(hours>0){
+    localStorage.setItem('toolscape.autoHours', String(hours));
+    timer = setInterval(() => { const url = localStorage.getItem('toolscape.dataURL'); if(url) fetchDataFrom(url); }, hours*3600*1000);
+    setStatus('자동 새로고침: ' + hours + '시간 간격');
+  } else { localStorage.removeItem('toolscape.autoHours'); setStatus('자동 새로고침 꺼짐'); }
+}
+every.addEventListener('change', applyAutoRefresh);
+
+// Snapshot buttons
+function downloadSnapshot(label){
+  try {
+    const ts = new Date().toISOString().replace(/[-:]/g,'').slice(0,15);
+    const fileName = `AI_Tools_Catalog_Snapshot_${ts}.html`;
+    let htmlText = document.documentElement.outerHTML;
+    htmlText = htmlText.replace(/AI Toolscape \(v6\.[0-9]+,.*?\)/, 'AI Toolscape ('+label+')');
+    const dataLiteral = JSON.stringify(DATA).replace(/<\//g,'<\/');
+    const orderLiteral = JSON.stringify(ORDER);
+    htmlText = htmlText.replace(/const EMBEDDED_DATA = .*?;\nconst EMBEDDED_ORDER = /s, 'const EMBEDDED_DATA = '+dataLiteral+';\nconst EMBEDDED_ORDER = ');
+    htmlText = htmlText.replace(/const EMBEDDED_ORDER = .*?;\nlet DATA/s, 'const EMBEDDED_ORDER = '+orderLiteral+';\nlet DATA');
+    const blob = new Blob([htmlText], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    setStatus('스냅샷 저장 완료');
+  } catch(e){ alert('스냅샷 오류: '+e.message); }
+}
+document.getElementById('exportBtn').addEventListener('click', () => downloadSnapshot('v6.7 Snapshot'));
+document.getElementById('refreshSnapshotBtn').addEventListener('click', async () => {
+  const saved = localStorage.getItem('toolscape.dataURL');
+  if(!saved){ alert('저장된 데이터 소스 URL이 없습니다. [URL 저장]을 먼저 눌러주세요.'); return; }
+  await fetchDataFrom(saved); downloadSnapshot('v6.7 Snapshot');
+});
+
+// Init (render embedded first)
+(function init(){
+  const stored = localStorage.getItem('toolscape.dataURL'); if(stored) src.value = stored;
+  const h = Number(localStorage.getItem('toolscape.autoHours')||'0'); if(h>0){ every.value = String(h); applyAutoRefresh(); }
+  last.textContent = nowStr();
+  render(); // embedded first
+})();
+</script>
+</body>
+</html>
